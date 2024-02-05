@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date Time</th>
+                <th>Hour 1 Data</th>
+                <!-- Các trường dữ liệu khác -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for data_record in all_data %}
+                <tr>
+                    <td>{{ data_record.id }}</td>
+                    <td>{{ data_record.date_time }}</td>
+                    <td>{{ data_record.hour_1_data }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

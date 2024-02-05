@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <button id="exportButton">Export to Excel</button>
+    <input type="date" id="yourDatePickerId" min="2022-02-20" max="2032-02-20" class="today">
+
+    <canvas id="myChart" width="400" height="150"></canvas>
+    <script>
+        $(document).ready(function () {
+            $('.today').val(getToday());
+            var myChart; // Biến lưu trữ đối tượng biểu đồ
+            var allData = []; // Mảng lưu trữ toàn bộ dữ liệu của biểu đồ
+
+            var selectedDate = getCurrentDate(); // Lấy ngày hiện tại làm giá trị mặc định
+
+            function getToday(){
+                const local = new Date();
+                local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
+                return local.toJSON().slice(0,10);
+            }
+
+            // Hàm lấy ngày hiện tại dưới định dạng YYYY-MM-DD
+            function getCurrentDate() {
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0'); // Tháng bắt đầu từ 0
+                var yyyy = today.getFullYear();
+                return mm + '-' + dd + '-' + yyyy;
+            }
+
+            // Hàm cập nhật giá trị selectedDate khi người dùng thay đổi ngày
+            $("#yourDatePickerId").on("change", function () {
+                selectedDate = $(this).val();
+                console.log(selectedDate)
+                // Kiểm tra và chuyển đổi định dạng ngày nếu cần
+                var parts = selectedDate.split('-');
+                if (parts.length === 3) {
+                    selectedDate = parts[1] + '-' + parts[2] + '-' + parts[0];
+                }
+                fetchDataAndDrawChart(); // Cập nhật biểu đồ khi người dùng thay đổi ngày
+            });
+
+            // var selectedDate = "01-26-2024"; // Đặt ngày bạn muốn hiển thị
+
+            // Hàm thực hiện Ajax request và cập nhật biểu đồ
+            function fetchDataAndDrawChart() {
+                $.ajax({
+                    url: '/get_data_day/',
+                    method: 'GET',
+                    data: { date: selectedDate }, // Truyền ngày đã chọn vào request
+                    success: function (data) {
+                        allData = data;
+                        // Lọc dữ liệu cho ngày được chọn
+                        var selectedData = allData.find(item => item.date_time === selectedDate);
+                        /*
+                        var latestData = data.reduce(function (prev, current) {
+                            return (prev.id > current.id) ? prev : current;
+                        });
+                        */
+                        // console.log(latestData)
+                        drawChart(selectedData);
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+            }
+
+            function drawChart(data) {
+                var chartData = Object.values(data).slice(2, 26);
+
+                // Lọc dữ liệu cho ngày được chọn
+                var selectedData = allData.find(item => item.date_time === selectedDate);
+
+                // Nếu biểu đồ đã tồn tại, chỉ cập nhật dữ liệu của cột cuối cùng
+                if (myChart) {
+                    myChart.data.datasets[0].data = chartData;
+                    myChart.update();
+                } else {
+                    var ctx = document.getElementById('myChart').getContext('2d');
+                    myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: Array.from({ length: 24 }, (_, i) => `Hour ${i + 1}`),
+                            datasets: [{
+                                label: 'Hourly Data',
+                                data: chartData,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+    
+            // Gọi hàm fetchDataAndDrawChart ngay khi trang được tải
+            fetchDataAndDrawChart();
+    
+            // Thực hiện Ajax request và cập nhật biểu đồ mỗi 30 phút = 1800000
+            setInterval(fetchDataAndDrawChart, 5000); // Cập nhật mỗi 30 phút (5 giây = 5000 milliseconds)
+
+            function exportToExcel() {
+                // Tạo workbook và worksheet
+                var wb = XLSX.utils.book_new();
+                var ws = XLSX.utils.json_to_sheet(allData.map(item => ({
+                    DateTime: item.date_time,
+                    Hour_1: item.hour_1_data,
+                    Hour_2: item.hour_2_data,
+                    Hour_3: item.hour_3_data,
+                    Hour_4: item.hour_4_data,
+                    Hour_5: item.hour_5_data,
+                    Hour_6: item.hour_6_data,
+                    Hour_7: item.hour_7_data,
+                    Hour_8: item.hour_8_data,
+                    Hour_9: item.hour_9_data,
+                    Hour_10: item.hour_10_data,
+                    Hour_11: item.hour_11_data,
+                    Hour_12: item.hour_12_data,
+                    Hour_13: item.hour_13_data,
+                    Hour_14: item.hour_14_data,
+                    Hour_15: item.hour_15_data,
+                    Hour_16: item.hour_16_data,
+                    Hour_17: item.hour_17_data,
+                    Hour_18: item.hour_18_data,
+                    Hour_19: item.hour_19_data,
+                    Hour_20: item.hour_20_data,
+                    Hour_21: item.hour_21_data,
+                    Hour_22: item.hour_22_data,
+                    Hour_23: item.hour_23_data,
+                    Hour_24: item.hour_24_data,
+                })));
+
+                // Thêm worksheet vào workbook
+                XLSX.utils.book_append_sheet(wb, ws, 'All Data');
+
+                // Tải file Excel
+                XLSX.writeFile(wb, 'all_data.xlsx');
+            } 
+
+            // Đính kèm sự kiện click cho nút button
+            document.getElementById('exportButton').addEventListener('click', exportToExcel);
+        });
+    </script>
+</body>
+</html>
